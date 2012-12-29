@@ -5,9 +5,9 @@
 options {
   JDK_VERSION = "1.5";
 }
-PARSER_BEGIN(eg1)
+PARSER_BEGIN(JSP)
 
-public class eg1 {
+public class JSP {
   public static void main(String args[]) throws ParseException {
     eg1 parser = new eg1(System.in);
     while (true) {
@@ -27,7 +27,7 @@ public class eg1 {
       } catch (Exception e) {
         System.out.println("NOK.");
         System.out.println(e.getMessage());
-        eg1.ReInit(System.in);
+        JSP.ReInit(System.in);
       } catch (Error e) {
         System.out.println("Oops.");
         System.out.println(e.getMessage());
@@ -36,7 +36,7 @@ public class eg1 {
     }
   }
 }
-PARSER_END(eg1)
+PARSER_END(JSP)
 
 SKIP :
 {
@@ -45,18 +45,177 @@ SKIP :
 |	"\t"
 |	"\n"
 }
-TOKEN : /* OPERATORS */
-{
-	< PLUS: "+" >
-|	< MINUS: "-" >
-|	< MULTIPLY: "*" >
-|	< DIVIDE: "/" >
-}
+
 TOKEN :
 {
     < CONSTANT: ( <DIGIT> )+ >
 |   < #DIGIT: ["0" - "9"] >
 }
+
+TOKEN:
+{
+< DELETE: "delete" >
+|
+< FUNCTION: "function" >
+|
+< IN: "in" >
+|
+< CASE: "case" >
+|
+< NEW: "new" >
+|
+< RETURN: "return" >
+|
+< THIS: "this" >
+|
+< TYPEOF: "typeof" >
+|
+< VOID: "void" >
+|
+< WITH: "with" >
+|
+< CATCH: "catch" >
+|
+< CLASS: "class" >
+|
+< CONST: "const" >
+|
+< DEBUGGER: "debugger" >
+|
+< _DEFAULT: "default" >
+|
+< ENUM: "enum" >
+|
+< EXPORT: "export" >
+|
+< EXTENDS: "extends" >
+|
+< FINALLY: "finally" >
+|
+< IMPORT: "import" >
+|
+< SUPER: "super" >
+|
+< SWITCH: "switch" >
+|
+< THROW: "throw" >
+|
+< TRY: "try" >
+|
+< VAR: "var" >
+|
+< BREAK: "break" >
+|
+< CONTINUE: "continue" >
+|
+< IF: "if" >
+|
+< ELSE: "else" >
+|
+< DO: "do" >
+|
+< WHILE: "while" >
+|
+< FOR: "for" >
+|
+< LEFTBRACE: "{" >
+|
+< RIGHTBRACE: "}" >
+|
+< LEFTPAREN: "(" >
+|
+< RIghtPAREN: ")" >
+|
+< LEFTBRACKET: "[" >
+|
+< RIGHTBRACKET: "]" >
+|
+< DOT: "." >
+|
+< SEMICOLON: ";" >
+|
+< COMMA: "," >
+|
+< Less_than: "<">
+|
+< Greater_than: ">">
+|
+< Less_than_or_Equal: "<=">
+|
+< Greater_than_or_Equal: ">=">
+|
+< EQ: "==" >
+|
+< Not_equal: "!=">
+|
+< Strict_Equals_Operator: "===" >
+|
+< Strict_Does_not_equal_Operator: "!==" >
+|
+< EOL: ("\r\n" | ":")+ >
+|
+< MOD: "%" >
+|
+< NOT: "!" >
+|
+< DIVIDE: "/" >
+|
+< PLUS: "+" >
+|
+< MINUS: "-" >
+|
+< MULTIPLY: "*" >
+|
+< INCR: "++" >
+|
+< DECR: "--" >
+|
+< LSHIFT: "<<" >
+|
+< RSHIFT: ">>" >
+|
+< RUNSHIFT: ">>>" >
+|
+< BIT_AND: "&" >
+|
+< BIT_OR: "|" >
+|
+< XOR: "^" >
+|
+< TILDE: "~" >
+|
+< SC_AND: "&&" >
+|
+< SC_OR: "||" >
+|
+< HOOK: "?" >
+|
+< COLON: ":" >
+|
+< ASSIGN: "=" >
+|
+< PLUSASSIGN: "+=" >
+|
+< MINUSASSIGN: "-=" >
+|
+< STARASSIGN: "*=" >
+|
+< REMASSIGN: "%=" >
+|
+< LSHIFTASSIGN: "<<=" >
+|
+< RSIGNEDSHIFTASSIGN: ">>=" >
+|
+< RUNSIGNEDSHIFTASSIGN: ">>>=" >
+|
+< ANDASSIGN: "&=" >
+|
+< ORASSIGN: "|=" >
+|
+< XORASSIGN: "^=" >
+}
+
+
 int one_line() : {}
 {
   sum() ";" { return 0; }
