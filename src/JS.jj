@@ -1,0 +1,450 @@
+/**
+ * JavaCC file
+ */
+
+options {
+  JDK_VERSION = "1.5";
+}
+PARSER_BEGIN(JS)
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.Scanner;
+
+
+
+
+public class JS {
+  			public static HashMap<String, Value> Vars = new HashMap<String, Value>();
+  public static void main(String[] args) throws ParseException, TokenMgrError, FileNotFoundException {
+
+			JS Js = new JS(new FileReader("D:\\test.js"));
+			StartNode S = Start();
+			S.execute(Vars);
+		}
+}
+PARSER_END(JS)
+
+
+SKIP :
+{
+ 	" "
+|	"\n"
+|	"\r"
+|	"\t"
+|	<"//" (~["\n"])* ("\n")>
+|	<"/*"> : COMMENT
+}
+
+<COMMENT> SKIP :
+{
+	<~[]>
+|	<"*/"> : DEFAULT
+}
+
+
+//TOKEN ://{//////| 	< AND: "&&">////|	< OR: "||">////|	< NOT: "!">////|	< GT: ">" >////| 	< GTE: ">=" >////| 	< LT: "<" >////| 	< LTE: "<=" >//}
+
+
+TOKEN :
+{
+	< FOR: "for" >
+|	< WHILE: "while" >
+|	< DO: "do" >
+}
+
+TOKEN :
+{
+	< VAR: "var" >
+|	< IF: "if" >
+|	< ELSE: "else" >
+|   < ELSEIF: <ELSE> <IF> >
+|	< TRUE: "true" >
+|	< FALSE: "false" >
+}
+
+TOKEN :
+{
+	< #CONTINUE: "continue" >
+|	< #BREAK: "break" >
+|	< #RETURN: "return" >
+|	< STOP: <CONTINUE> | <BREAK> | <RETURN> >
+}
+
+TOKEN :
+{
+
+	< FUNCTION: "function" >
+|	< NEW: "new" >
+|	< SEMICOLON: ";" >
+|	<NUM: (["0"-"9"])+ ("." (["0" - "9"])+)?>
+|   <PRINT: "print">
+|	<READ: "read">
+|	<SIN : "sin">
+|	<COS : "cos">
+
+}
+
+
+TOKEN :
+{
+	< DIGIT: ["0" - "9"]>
+|	< #CHARACTER: ["a"-"z", "A"-"Z","_"]>
+|	< ID:  ( <CHARACTER> )  (( <DIGIT> ) | <CHARACTER>)* >
+//|	< IDA:  ( <CHARACTER> )  (( <DIGIT> ) | <CHARACTER>)* ("[") >
+|   < String: "\"" (~[ "\"" ])* "\"" >
+
+}
+
+//TOKEN : /* Assignment ops */
+//{
+//	< EQ: "=">
+//|	< #PE: "+=">
+//|	< #ME: "-=">
+//|	< #MUE: "*=">
+//|	< #DEE: "/=">
+//|	< #MODE: "%=">
+//|	< ASSIGNMENTOP: (<PE> | <ME> | <MUE> | <DEE> | <MODE>  )>
+//
+//
+//}
+
+StartNode Start():
+{
+	StartNode n = new StartNode();
+	TreeNode next;
+}
+{
+	(  next = Statement(){n.addChild(next);} )*  <EOF>
+	{return n;}
+}
+
+TreeNode Statement():
+{
+	TreeNode n;
+}
+{
+(
+   	LOOKAHEAD(5)n = Assignment() ";"
+|   LOOKAHEAD(4)n = ExpStatement() ";"
+|	LOOKAHEAD(4)n = FunctionCallStatement() ";"
+| 	n = PRINT_Command() ";"
+|	n = IF_Statement()
+|	n = FOR_Statement()
+|	n = While_Statement()
+|	n = DoWhile_Statement() ";"
+|   n = Read_Command() ";"
+|	n = StopStatement() ";"
+|	n= FunctionStatement()
+
+)
+	{return n;}
+}
+
+
+
+TreeNode Assignment():
+{
+	AssignmentNode n; //= new AssignmentNode();
+	ArrayNode a = null;
+	Token t;
+	TreeNode exp;
+	TreeNode e;
+}
+{
+	(<VAR>)?
+	 (t = <ID> {n = new AssignmentNode(t.image);})
+	 ( "[" ( e=Exp() {n.isIndex = true; n.index = e;} "]"))?
+
+	(
+	 	 (t = <"="|"+="|"-="|"*="|"/*"|"%="> {n.Type = t.image;}(exp = Exp() {n.addChild(exp);})?)
+	)
+
+	 {
+	   	if(a != null)
+	   		return a;
+	   	return n;
+	 }
+}
+
+TreeNode ExpStatement():
+{
+	PrintNode n = new PrintNode();
+	TreeNode e;
+	Token t;
+}
+{
+	e = Exp()
+	{n.addChild(e);}
+	{return n;}
+}
+
+TreeNode Exp():
+{
+	ExpressionNode n = new ExpressionNode();
+	TreeNode n1,n2 = null;
+	TreeNode e = null;
+}
+{
+	n1 = FirstPriorety()
+		(
+				"==" n2 =  Exp() {n.type = '=';	n.addChild(n1);n.addChild(n2);}
+			|
+				"||" n2 =  Exp() {n.type = 'o';	n.addChild(n1);n.addChild(n2);}
+			|
+				"<" n2 = Exp() {n.type = '<';	n.addChild(n1);n.addChild(n2);}
+			|
+				">" n2 = Exp() {n.type = '>';	n.addChild(n1);n.addChild(n2);}
+			|
+				"<=" n2 = Exp() {n.type = 'l';	n.addChild(n1);n.addChild(n2);}
+			|
+				">=" n2 = Exp() {n.type = 'g';	n.addChild(n1);n.addChild(n2);}
+			|
+			LOOKAHEAD(2)("!=") n2 = Exp() {n.type = '!';n.addChild(n1);n.addChild(n2);}
+			|
+			LOOKAHEAD(2)("+") n2 = Exp() {n.type = '+';	n.addChild(n1);n.addChild(n2);}
+			|
+			LOOKAHEAD(2)("-") n2 = Exp() {n.type = '-';	n.addChild(n1);n.addChild(n2);}
+		)?
+
+	{
+		if (n2 == null)
+			return n1;
+		else
+			return n;
+	}
+
+}
+
+TreeNode FirstPriorety():
+{
+	ExpressionNode n = new ExpressionNode();
+	TreeNode n1,n2 = null;
+}
+{
+	( ("(" n1 = Exp() ")") | (n1 = I()))
+		(
+			LOOKAHEAD(2)("*") n2 = FirstPriorety() {n.type = '*';	n.addChild(n1);n.addChild(n2);}
+			|
+				"&&" n2 =  Exp() {n.type = 'a';	n.addChild(n1);n.addChild(n2);}
+			|
+			LOOKAHEAD(2)("/") n2 = FirstPriorety(){n.type = '/';	n.addChild(n1);n.addChild(n2);}
+			|
+				"^" n2 = FirstPriorety(){n.type = '^';	n.addChild(n1);n.addChild(n2);}
+			|
+			LOOKAHEAD(2)("%") n2 = FirstPriorety(){n.type = '%'; n.addChild(n1);n.addChild(n2);}
+		)?
+	{
+		if (n2 == null)
+			return n1;
+		else
+			return n;
+	}
+}
+
+TreeNode I():
+{
+	TreeNode n;
+	TreeNode n2;
+	ExpressionNode e= new ExpressionNode();;
+	Token t,t1;
+	boolean isExp = false;
+	TreeNode ee;
+	TreeNode exp;
+}
+{
+	(
+			(t = <NUM> {n = new ConstNode(new Value(0,new Double(Double.parseDouble(t.image)) ) );})
+		|	(t = <String> {n = new ConstNode(new Value(1, new String(t.image.substring(1, t.image.length()-1)) ) );})
+		|	"!" n = Exp() {isExp = true;e.type = 'n';	e.addChild(n);e.addChild(n);}
+		| 	("[" { n = new ArrayNode(); } (exp = Exp() { n.addChild(exp);} )? ("," exp = Exp() {n.addChild(exp);} )* "]"  )
+		|	LOOKAHEAD(4)n = FunctionCallStatement()
+		|	LOOKAHEAD(2) t = <ID> "." {n = new ObjectNode(); ((ObjectNode)n).name=t.image;}
+								( LOOKAHEAD(4)	 n2= FunctionCallStatement() {n = new ObjectNode(); ((ObjectNode)n).name=t.image; ((FunctionCallNode)n2).type=2; n.addChild(n2);}
+								| LOOKAHEAD(4)	t1=<ID>  {n2 = new VariableNode(); ((VariableNode)n2).var=t1.image; n.addChild(n2);})
+		|	LOOKAHEAD(3)t = <ID>   { n = new VariableNode(); ((VariableNode)n).var = t.image; }(
+		  				"[" ee=Exp() {n.addChild(ee); ((VariableNode)n).type = 5;} "]"
+					| 	 "++" { ((VariableNode)n).type = 1; }
+					|	 "--" { ((VariableNode)n).type = 2;}
+					)?
+		|	"++" t = <ID> { n = new VariableNode(); ((VariableNode)n).var = t.image; ((VariableNode)n).type = 3;}
+		|	"--" t = <ID> { n = new VariableNode(); ((VariableNode)n).var = t.image; ((VariableNode)n).type = 4;}
+
+
+//			( "." {((VariableNode)n).isType = true;} t = <ID> {((VariableNode)n).FieldName = t.image;} )?
+	)
+	{
+		if(isExp)
+			return e;
+		return n;
+	}
+}
+
+//ObjectNode ObjectID():
+//{
+//  	ObjectNode n,n1,n2;
+//}
+//{
+//  	n1 = ObjectStatement() "." <ID>
+//  	{
+//  	  n = new ObjectID();
+//  	}
+//}
+
+IfNode IF_Statement():
+{
+	IfNode n = new IfNode();
+	StartNode n3,n2,n1 = new StartNode();
+	TreeNode cond;
+	TreeNode next;
+}
+{
+	<IF> "(" cond = Exp() {n.addChild(cond);n.addChild(n1);} ")" ((next = Statement(){n1.addChild(next);})
+		|	("{" ( next = Statement() {n1.addChild(next);} )* "}"))
+	(LOOKAHEAD(6)<ELSEIF> "(" cond = Exp() {n.addChild(cond); n2 = new StartNode(); n.addChild(n2);}  ")" ((next = Statement() {n2.addChild(next);})
+	|	("{"( next = Statement() {n2.addChild(next);} )* "}"))
+	)*
+	(LOOKAHEAD(6)<ELSE> {n.hasElse = true; n3 = new StartNode(); n.addChild(n3);} ((next = Statement() {n3.addChild(next);})
+	|	("{"( next = Statement() {n3.addChild(next);} )* "}"))
+	)?
+	{return n;}
+}
+
+ForNode FOR_Statement():
+{
+	ForNode n = new ForNode();
+	TreeNode n1;
+	TreeNode n2;
+	TreeNode n3;
+	StartNode n4 = new StartNode();
+	TreeNode next;
+}
+{
+	<FOR> "(" n1=Assignment() ";" n2=Exp() ";" (LOOKAHEAD(2)n3=Assignment()|n3=Exp()) ")" {n.addChild(n1); n.addChild(n2); n.addChild(n3); n.addChild(n4);}
+	(next = Statement(){n4.addChild(next);}
+	|"{" (next = Statement(){n4.addChild(next);})* "}")
+	{return n;}
+}
+
+WhileNode While_Statement():
+{
+	WhileNode n = new WhileNode();
+	TreeNode n1;
+	StartNode n2 = new StartNode();
+	TreeNode next;
+}
+{
+	<WHILE> "(" n1=Exp() ")"
+		{n.addChild(n1);n.addChild(n2);}
+	"{" (next = Statement(){n2.addChild(next);})* "}"
+	{return n;}
+}
+
+DoWhileNode DoWhile_Statement():
+{
+	DoWhileNode n = new DoWhileNode();
+	TreeNode n1;
+	StartNode n2 = new StartNode();
+	TreeNode next;
+}
+{
+	<DO>
+
+	"{" (next = Statement(){n2.addChild(next);})* "}"
+	<WHILE> "(" n1=Exp() ")"
+	{n.addChild(n1);n.addChild(n2);}
+	{return n;}
+}
+
+TreeNode StopStatement():
+{
+	TreeNode e;
+	StopNode n = new StopNode();
+	Token t;
+}
+{
+	t = <STOP> {n.type = Stop.valueOf(t.image+"s");} ((e = Exp(){n.addChild(e);})?)
+	{return n;}
+}
+
+
+PrintNode PRINT_Command():
+{
+	PrintNode n = new PrintNode();
+	TreeNode next;
+}
+{
+		<PRINT>	next = Exp() {n.addChild(next);}
+	{return n;}
+}
+
+ReadNode Read_Command():
+{
+	ReadNode n = new ReadNode();
+	Token t;
+}
+{
+	<READ> "(" t = <ID>
+	{
+		n.image = t.image;
+	}
+	")"
+	{return n;}
+}
+
+FunctionNode FunctionStatement():
+{
+	FunctionNode f = new FunctionNode();
+	StartNode n = new StartNode();
+	TreeNode next;
+	Token t;
+}
+{
+	<FUNCTION> t = <ID> {f.name = t.image;} "(" (((t=<ID>{f.params.add(t.image);})?)  (("," t=<ID> {f.params.add(t.image);})+)?) ")"
+	"{"
+		( next = Statement(){n.addChild(next);} )*
+	"}"
+	{f.addChild(n);}
+	{return f;}
+}
+
+FunctionCallNode FunctionCallStatement():
+{
+	TreeNode e;
+	FunctionCallNode f = new FunctionCallNode();
+	Token t;
+}
+{
+	((t = <ID> {f.name = t.image;} "(" (((e=Exp(){f.addChild(e);})?)  (("," e=Exp() {f.addChild(e);})+)?) ")")
+	| (  <NEW> {f.type=1;} t = <ID> {f.name = t.image;} "(" (((e=Exp(){f.addChild(e);})?)  (("," e=Exp() {f.addChild(e);})+)?) ")"	))
+	{return f;}
+}
+
+
+
+//int one_line() : {}
+//{
+//  sum() ";" { return 0; }
+//| ";"	    { return 1; }
+//}
+//void sum() : {}
+//{
+//  term() (( <PLUS> | <MINUS> ) term())*
+//}
+//void term() : {}
+//{
+//  unary() (( <MULTIPLY> | <DIVIDE> ) unary())*
+//}
+//void unary() : {}
+//{
+//  <MINUS> element()
+// | element()
+//}
+//void element() : {}
+//{
+//  <CONSTANT>
+//| "(" sum() ")"
+//}

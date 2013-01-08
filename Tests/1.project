@@ -1,0 +1,13 @@
+i = 5;
+function f(a,b) {
+	print a+3;
+	for(i=0;i<b;i++)
+	{
+		if(i!=1)
+		{
+			print("i am inside if inside for"+i);
+		}
+	}
+}
+
+f(i,4);
