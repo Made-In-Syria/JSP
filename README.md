@@ -1,4 +1,4 @@
-This is a simple javascript compiler, it has built with javacc, you can enter javascript code to it and it will execute it.
+This is a simple javascript compiler, it has been built by javacc, you can enter javascript code to it and it will execute it.
 
 To print some thing use "print" command, and to read something use "read" command.
 
