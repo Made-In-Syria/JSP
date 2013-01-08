@@ -63,6 +63,6 @@ AUTHORS
 
 Baraa Attabbaa
 
-Tareq Jzar
+Tareq Jazer
 
 Mohammed Adnan Al-khabbaz
